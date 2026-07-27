@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OAuth 2.0 · Authorization</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(145deg, #f6f9fc 0%, #e9f0f5 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      padding: 1.5rem;
+    }
+
+    .oauth-card {
+      max-width: 480px;
+      width: 100%;
+      background-color: #ffffff;
+      border-radius: 40px;
+      box-shadow: 0 25px 50px -10px rgba(0, 20, 40, 0.25), 0 10px 20px -8px rgba(0, 0, 0, 0.08);
+      padding: 2.5rem 2rem;
+      transition: transform 0.2s ease;
+    }
+
+    .oauth-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .auth-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .auth-header .shield-icon {
+      background: #1a5cff;
+      color: white;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      font-size: 1.6rem;
+      box-shadow: 0 8px 16px -6px rgba(26, 92, 255, 0.3);
+    }
+
+    .auth-header h1 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #0b1a33;
+    }
+
+    .auth-header h1 span {
+      font-weight: 300;
+      color: #4a6a8b;
+    }
+
+    .app-badge {
+      display: inline-flex;
+      align-items: center;
+      background: #f0f4fe;
+      color: #1a5cff;
+      padding: 0.35rem 1rem 0.35rem 0.85rem;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+      gap: 0.5rem;
+      border: 1px solid rgba(26, 92, 255, 0.15);
+    }
+
+    .app-badge i {
+      font-size: 0.9rem;
+    }
+
+    .app-badge strong {
+      font-weight: 600;
+    }
+
+    .permission-box {
+      background: #f8fafd;
+      border-radius: 24px;
+      padding: 1.5rem 1.25rem;
+      margin: 1.5rem 0 2rem 0;
+      border: 1px solid #e6edf4;
+    }
+
+    .permission-box .title {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 600;
+      color: #0b1a33;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .permission-box .title i {
+      color: #1a5cff;
+      font-size: 1.1rem;
+    }
+
+    .permission-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .permission-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: #1f3349;
+      font-size: 0.95rem;
+    }
+
+    .permission-item i {
+      width: 20px;
+      color: #1a5cff;
+      font-size: 1rem;
+      text-align: center;
+    }
+
+    .permission-item .badge-optional {
+      background: #eaf0f8;
+      color: #2d4b6e;
+      font-size: 0.6rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 40px;
+      margin-left: 0.25rem;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    .user-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: #ffffff;
+      padding: 0.5rem 0.5rem 0.5rem 1rem;
+      border-radius: 60px;
+      border: 1px solid #dce5ef;
+      margin-bottom: 1rem;
+      transition: all 0.15s;
+    }
+
+    .user-section:hover {
+      border-color: #b3c9e0;
+      background: #fafdff;
+    }
+
+    .avatar {
+      background: #1a5cff;
+      color: white;
+      font-weight: 600;
+      font-size: 1.2rem;
+      width: 44px;
+      height: 44px;
+      border-radius: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background-image: linear-gradient(135deg, #1a5cff, #4a8aff);
+      box-shadow: 0 4px 8px rgba(26, 92, 255, 0.2);
+    }
+
+    .user-info {
+      flex: 1;
+    }
+
+    .user-info .name {
+      font-weight: 600;
+      color: #0b1a33;
+      font-size: 1rem;
+    }
+
+    .user-info .email {
+      font-size: 0.85rem;
+      color: #4a6a8b;
+      margin-top: 0.1rem;
+    }
+
+    .user-info .email i {
+      margin-right: 0.3rem;
+      font-size: 0.7rem;
+      color: #7a9abf;
+    }
+
+    .switch-account {
+      color: #1a5cff;
+      font-weight: 500;
+      font-size: 0.8rem;
+      background: #eef4fe;
+      padding: 0.4rem 0.9rem;
+      border-radius: 40px;
+      text-decoration: none;
+      transition: background 0.15s;
+      white-space: nowrap;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+
+    .switch-account:hover {
+      background: #dce6fe;
+      color: #0f47d6;
+    }
+
+    .switch-account:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .login-section {
+      background: #f8fafd;
+      border-radius: 24px;
+      padding: 1.25rem;
+      margin: 1rem 0 1.25rem 0;
+      border: 1px solid #e6edf4;
+      display: none;
+    }
+
+    .login-section.active {
+      display: block;
+    }
+
+    .login-section label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #1f3349;
+      margin-bottom: 0.3rem;
+    }
+
+    .login-section input {
+      width: 100%;
+      padding: 0.7rem 1rem;
+      border: 1px solid #d0ddee;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      transition: border 0.15s;
+      background: white;
+    }
+
+    .login-section input:focus {
+      outline: none;
+      border-color: #1a5cff;
+      box-shadow: 0 0 0 3px rgba(26, 92, 255, 0.1);
+    }
+
+    .login-section .input-group {
+      margin-bottom: 0.9rem;
+    }
+
+    .login-section .login-error {
+      color: #b91c2b;
+      font-size: 0.8rem;
+      margin-top: 0.4rem;
+      display: none;
+    }
+
+    .login-section .login-error.show {
+      display: block;
+    }
+
+    .login-section .login-actions {
+      display: flex;
+      gap: 0.7rem;
+      margin-top: 0.3rem;
+    }
+
+    .btn {
+      border: none;
+      padding: 0.9rem 1.5rem;
+      border-radius: 60px;
+      font-weight: 600;
+      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      font-family: inherit;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .btn-primary {
+      background: #1a5cff;
+      color: white;
+      box-shadow: 0 8px 18px -6px rgba(26, 92, 255, 0.35);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #0f4ad9;
+      transform: scale(1.01);
+      box-shadow: 0 12px 24px -8px rgba(26, 92, 255, 0.4);
+    }
+
+    .btn-primary:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #2b4b72;
+      border: 1px solid #d0ddee;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #f2f8ff;
+      border-color: #b0c8e2;
+    }
+
+    .btn-secondary i {
+      color: #5b7da0;
+    }
+
+    .btn-success {
+      background: #0f7b3a;
+      color: white;
+      box-shadow: 0 8px 18px -6px rgba(15, 123, 58, 0.4);
+    }
+
+    .btn-success:disabled {
+      opacity: 0.8;
+    }
+
+    .btn-denied {
+      background: #f8e1e4;
+      color: #9e2a3a;
+      border: 1px solid #dba7b2;
+    }
+
+    .btn-sm {
+      padding: 0.5rem 1.2rem;
+      font-size: 0.85rem;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: #1a5cff;
+      border: 1px solid #1a5cff;
+    }
+
+    .btn-outline:hover:not(:disabled) {
+      background: #f0f4fe;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      margin-top: 0.75rem;
+    }
+
+    .actions .btn-group {
+      display: flex;
+      gap: 0.7rem;
+      flex-wrap: wrap;
+    }
+
+    .actions .btn-group .btn {
+      flex: 1;
+      min-width: 100px;
+    }
+
+    .footnote {
+      margin-top: 2rem;
+      font-size: 0.75rem;
+      color: #6b8aaa;
+      text-align: center;
+      border-top: 1px solid #e2ecf5;
+      padding-top: 1.5rem;
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .footnote a {
+      color: #1a5cff;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .footnote a:hover {
+      text-decoration: underline;
+    }
+
+    .mock-tag {
+      background: #dfe8f3;
+      color: #1f3b5c;
+      padding: 0.2rem 0.8rem;
+      border-radius: 40px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.2rem 0.8rem;
+      border-radius: 40px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-left: 0.5rem;
+    }
+
+    .status-badge.online {
+      background: #e6f7e6;
+      color: #0f7b3a;
+    }
+
+    .status-badge.offline {
+      background: #f8e1e4;
+      color: #9e2a3a;
+    }
+
+    @media (max-width: 480px) {
+      .oauth-card {
+        padding: 1.8rem 1.2rem;
+      }
+      .auth-header h1 {
+        font-size: 1.3rem;
+      }
+      .user-section {
+        flex-wrap: wrap;
+        padding: 0.8rem;
+        border-radius: 28px;
+      }
+      .actions .btn-group {
+        flex-direction: column;
+      }
+      .actions .btn-group .btn {
+        flex: none;
+        width: 100%;
+      }
+      .login-section .login-actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="oauth-card" role="main" aria-label="OAuth authorization request">
+
+    <!-- Header -->
+    <div class="auth-header">
+      <div class="shield-icon">
+        <i class="fas fa-lock"></i>
+      </div>
+      <h1>OAuth <span>·</span> 2.0</h1>
+    </div>
+
+    <!-- App context -->
+    <div class="app-badge">
+      <i class="fas fa-robot"></i>
+      <span><strong>DemoApp</strong> requests access</span>
+      <span class="status-badge online" id="dbStatus"><i class="fas fa-database"></i> local</span>
+    </div>
+
+    <!-- Permission / scope card -->
+    <div class="permission-box">
+      <div class="title">
+        <i class="fas fa-shield-alt"></i>
+        <span>Permissions requested</span>
+      </div>
+      <div class="permission-list">
+        <div class="permission-item">
+          <i class="fas fa-user-circle"></i>
+          <span>View your profile information (name, email)</span>
+        </div>
+        <div class="permission-item">
+          <i class="fas fa-envelope"></i>
+          <span>Access your primary email address</span>
+        </div>
+        <div class="permission-item">
+          <i class="fas fa-calendar-alt"></i>
+          <span>Read calendar events (read-only)</span>
+          <span class="badge-optional">optional</span>
+        </div>
+        <div class="permission-item">
+          <i class="fas fa-address-book"></i>
+          <span>View your contact list</span>
+          <span class="badge-optional">optional</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- User info (simulated) -->
+    <div class="user-section" id="userSection">
+      <div class="avatar" id="userAvatar">JD</div>
+      <div class="user-info">
+        <div class="name" id="userName">Jamie Dawson</div>
+        <div class="email"><i class="fas fa-at"></i> <span id="userEmail">jamie.dawson@example.com</span></div>
+      </div>
+      <button class="switch-account" id="switchAccountBtn">
+        <i class="fas fa-exchange-alt" style="margin-right: 4px;"></i> Switch
+      </button>
+    </div>
+
+    <!-- Login Section (hidden by default, shown when switching accounts) -->
+    <div class="login-section" id="loginSection">
+      <div class="input-group">
+        <label for="loginEmail"><i class="fas fa-envelope"></i> Email</label>
+        <input type="email" id="loginEmail" placeholder="Enter your email" value="alice.smith@example.com">
+      </div>
+      <div class="input-group">
+        <label for="loginPassword"><i class="fas fa-lock"></i> Password</label>
+        <input type="password" id="loginPassword" placeholder="Enter your password" value="password123">
+      </div>
+      <div class="login-error" id="loginError">Invalid email or password. Please try again.</div>
+      <div class="login-actions">
+        <button class="btn btn-primary btn-sm" id="loginBtn" style="flex:2;">
+          <i class="fas fa-sign-in-alt"></i> Sign In
+        </button>
+        <button class="btn btn-secondary btn-sm" id="loginCancelBtn" style="flex:1;">
+          Cancel
+        </button>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="actions">
+      <button class="btn btn-primary" id="authorizeBtn">
+        <i class="fas fa-check-circle"></i> Authorize
+      </button>
+
+      <div class="btn-group">
+        <button class="btn btn-secondary" id="denyBtn">
+          <i class="fas fa-times"></i> Deny
+        </button>
+        <button class="btn btn-secondary" id="advancedBtn">
+          <i class="fas fa-cog"></i> Advanced
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footnote">
+      <span><i class="far fa-clock"></i> expires in 15 min</span>
+      <a href="#" onclick="event.preventDefault(); alert('Privacy policy would open here.');"><i class="fas fa-lock"></i> Privacy</a>
+      <a href="#" onclick="event.preventDefault(); alert('Terms of service would open here.');"><i class="fas fa-file-contract"></i> Terms</a>
+      <span class="mock-tag">🔒 on-device auth</span>
+    </div>
+
+  </div>
+
+  <script>
+    (function() {
+      // ============================================================
+      // 1. ON-DEVICE DATABASE (IndexedDB) - User Store
+      // ============================================================
+      const DB_NAME = 'OAuthLocalDB';
+      const DB_VERSION = 1;
+      const STORE_NAME = 'users';
+
+      // Pre-populated user data (will be seeded on first load)
+      const DEFAULT_USERS = [
+        { id: 1, name: 'Jamie Dawson', email: 'jamie.dawson@example.com', password: 'password123', avatar: 'JD' },
+        { id: 2, name: 'Alice Smith', email: 'alice.smith@example.com', password: 'password123', avatar: 'AS' },
+        { id: 3, name: 'Bob Johnson', email: 'bob.johnson@example.com', password: 'password123', avatar: 'BJ' },
+        { id: 4, name: 'Carol White', email: 'carol.white@example.com', password: 'password123', avatar: 'CW' }
+      ];
+
+      let db = null;
+      let currentUser = null; // Will hold the currently logged-in user object
+      let isActionTaken = false;
+
+      // DOM refs
+      const authorizeBtn = document.getElementById('authorizeBtn');
+      const denyBtn = document.getElementById('denyBtn');
+      const advancedBtn = document.getElementById('advancedBtn');
+      const switchAccountBtn = document.getElementById('switchAccountBtn');
+      const loginSection = document.getElementById('loginSection');
+      const loginEmail = document.getElementById('loginEmail');
+      const loginPassword = document.getElementById('loginPassword');
+      const loginBtn = document.getElementById('loginBtn');
+      const loginCancelBtn = document.getElementById('loginCancelBtn');
+      const loginError = document.getElementById('loginError');
+      const userName = document.getElementById('userName');
+      const userEmail = document.getElementById('userEmail');
+      const userAvatar = document.getElementById('userAvatar');
+      const dbStatus = document.getElementById('dbStatus');
+
+      // ============================================================
+      // 2. IndexedDB Helpers
+      // ============================================================
+      function openDB() {
+        return new Promise((resolve, reject) => {
+          const request = indexedDB.open(DB_NAME, DB_VERSION);
+          
+          request.onupgradeneeded = function(event) {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+              const store = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+              store.createIndex('email', 'email', { unique: true });
+              // Seed with default users
+              const tx = store.transaction;
+              const storeRef = tx.objectStore(STORE_NAME);
+              DEFAULT_USERS.forEach(user => {
+                storeRef.add(user);
+              });
+            }
+          };
+
+          request.onsuccess = function(event) {
+            db = event.target.result;
+            dbStatus.innerHTML = '<i class="fas fa-database"></i> local ✓';
+            dbStatus.className = 'status-badge online';
+            resolve(db);
+          };
+
+          request.onerror = function(event) {
+            dbStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> error';
+            dbStatus.className = 'status-badge offline';
+            reject(event.target.error);
+          };
+        });
+      }
+
+      function findUserByEmail(email) {
+        return new Promise((resolve, reject) => {
+          if (!db) {
+            reject(new Error('Database not initialized'));
+            return;
+          }
+          const tx = db.transaction(STORE_NAME, 'readonly');
+          const store = tx.objectStore(STORE_NAME);
+          const index = store.index('email');
+          const request = index.get(email);
+          
+          request.onsuccess = function() {
+            resolve(request.result || null);
+          };
+          request.onerror = function() {
+            reject(request.error);
+          };
+        });
+      }
+
+      function updateUserInDB(user) {
+        return new Promise((resolve, reject) => {
+          if (!db) {
+            reject(new Error('Database not initialized'));
+            return;
+          }
+          const tx = db.transaction(STORE_NAME, 'readwrite');
+          const store = tx.objectStore(STORE_NAME);
+          const request = store.put(user);
+          
+          request.onsuccess = function() {
+            resolve(user);
+          };
+          request.onerror = function() {
+            reject(request.error);
+          };
+        });
+      }
+
+      // ============================================================
+      // 3. User Management
+      // ============================================================
+      function setCurrentUser(user) {
+        currentUser = user;
+        if (user) {
+          userName.textContent = user.name;
+          userEmail.textContent = user.email;
+          userAvatar.textContent = user.avatar || user.name.charAt(0).toUpperCase();
+        } else {
+          userName.textContent = 'Not signed in';
+          userEmail.textContent = 'guest@example.com';
+          userAvatar.textContent = '?';
+        }
+        // Update login section if active
+        if (loginSection.classList.contains('active')) {
+          loginSection.classList.remove('active');
+        }
+        // Re-enable action buttons if no action taken yet
+        if (!isActionTaken) {
+          authorizeBtn.disabled = false;
+          denyBtn.disabled = false;
+          advancedBtn.disabled = false;
+        }
+      }
+
+      async function verifyUserCredentials(email, password) {
+        try {
+          const user = await findUserByEmail(email);
+          if (user && user.password === password) {
+            return user;
+          }
+          return null;
+        } catch (err) {
+          console.error('Verification error:', err);
+          return null;
+        }
+      }
+
+      // ============================================================
+      // 4. UI Helpers - Disable action buttons
+      // ============================================================
+      function disableAllButtons() {
+        authorizeBtn.disabled = true;
+        denyBtn.disabled = true;
+        advancedBtn.disabled = true;
+        switchAccountBtn.disabled = true;
+      }
+
+      function enableActionButtons() {
+        if (!isActionTaken) {
+          authorizeBtn.disabled = false;
+          denyBtn.disabled = false;
+          advancedBtn.disabled = false;
+        }
+        switchAccountBtn.disabled = false;
+      }
+
+      // ============================================================
+      // 5. Event Handlers
+      // ============================================================
+
+      // --- Authorize ---
+      authorizeBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (isActionTaken) return;
+        if (!currentUser) {
+          alert('⚠️ Please sign in first using the "Switch" button.');
+          return;
+        }
+        isActionTaken = true;
+        disableAllButtons();
+
+        this.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Authorizing…';
+        this.style.opacity = '0.8';
+
+        setTimeout(() => {
+          this.innerHTML = '<i class="fas fa-check-circle"></i> Authorized ✓';
+          this.className = 'btn btn-success';
+          this.style.opacity = '1';
+          denyBtn.style.opacity = '0.5';
+          setTimeout(() => {
+            alert(`✅ OAuth flow complete!\nUser: ${currentUser.name} (${currentUser.email})\nAuthorization code would be returned to the client.`);
+          }, 400);
+        }, 1200);
+      });
+
+      // --- Deny ---
+      denyBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (isActionTaken) return;
+        if (!currentUser) {
+          alert('⚠️ Please sign in first using the "Switch" button.');
+          return;
+        }
+        isActionTaken = true;
+        disableAllButtons();
+
+        this.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Denying…';
+        this.style.opacity = '0.7';
+
+        setTimeout(() => {
+          this.innerHTML = '<i class="fas fa-times-circle"></i> Denied';
+          this.className = 'btn btn-denied';
+          this.style.opacity = '1';
+          authorizeBtn.style.opacity = '0.5';
+          setTimeout(() => {
+            alert('❌ Access denied. The client will receive an error response.');
+          }, 400);
+        }, 800);
+      });
+
+      // --- Advanced ---
+      advancedBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (isActionTaken) {
+          alert('⚠️ Authorization flow already completed. Advanced settings are not available.');
+          return;
+        }
+        alert('⚙️ Advanced settings:\n• Custom scopes\n• Token endpoint configuration\n• PKCE flow\n• Client authentication methods');
+      });
+
+      // --- Switch Account (show login) ---
+      switchAccountBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (isActionTaken) {
+          alert('⚠️ Authorization already completed. Cannot switch accounts.');
+          return;
+        }
+        // Toggle login section
+        const isActive = loginSection.classList.contains('active');
+        if (isActive) {
+          loginSection.classList.remove('active');
+          enableActionButtons();
+        } else {
+          loginSection.classList.add('active');
+          loginError.classList.remove('show');
+          loginEmail.value = 'alice.smith@example.com';
+          loginPassword.value = 'password123';
+          loginEmail.focus();
+          // Disable action buttons while logging in
+          authorizeBtn.disabled = true;
+          denyBtn.disabled = true;
+          advancedBtn.disabled = true;
+        }
+      });
+
+      // --- Login ---
+      loginBtn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        const email = loginEmail.value.trim();
+        const password = loginPassword.value.trim();
+
+        if (!email || !password) {
+          loginError.textContent = 'Please enter both email and password.';
+          loginError.classList.add('show');
+          return;
+        }
+
+        // Verify against on-device database
+        loginBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Verifying…';
+        loginBtn.disabled = true;
+
+        try {
+          const user = await verifyUserCredentials(email, password);
+          if (user) {
+            loginError.classList.remove('show');
+            setCurrentUser(user);
+            loginSection.classList.remove('active');
+            // Re-enable buttons
+            if (!isActionTaken) {
+              authorizeBtn.disabled = false;
+              denyBtn.disabled = false;
+              advancedBtn.disabled = false;
+            }
+            loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+            loginBtn.disabled = false;
+            alert(`✅ Signed in as ${user.name}`);
+          } else {
+            loginError.textContent = 'Invalid email or password. Please try again.';
+            loginError.classList.add('show');
+            loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+            loginBtn.disabled = false;
+          }
+        } catch (err) {
+          console.error('Login error:', err);
+          loginError.textContent = 'Database error. Please try again.';
+          loginError.classList.add('show');
+          loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+          loginBtn.disabled = false;
+        }
+      });
+
+      // --- Login Cancel ---
+      loginCancelBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        loginSection.classList.remove('active');
+        loginError.classList.remove('show');
+        if (currentUser) {
+          enableActionButtons();
+        } else {
+          // If no user, keep buttons disabled until sign in
+          authorizeBtn.disabled = true;
+          denyBtn.disabled = true;
+          advancedBtn.disabled = true;
+          switchAccountBtn.disabled = false;
+        }
+      });
+
+      // Allow Enter key in login fields
+      loginEmail.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          loginPassword.focus();
+        }
+      });
+      loginPassword.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          loginBtn.click();
+        }
+      });
+
+      // ============================================================
+      // 6. Initialize - Open DB and set default user
+      // ============================================================
+      async function init() {
+        try {
+          await openDB();
+          // Set default user (Jamie Dawson)
+          const defaultUser = await findUserByEmail('jamie.dawson@example.com');
+          if (defaultUser) {
+            setCurrentUser(defaultUser);
+          } else {
+            // Fallback: try to find any user
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            const store = tx.objectStore(STORE_NAME);
+            const request = store.getAll();
+            request.onsuccess = function() {
+              const users = request.result;
+              if (users && users.length > 0) {
+                setCurrentUser(users[0]);
+              } else {
+                setCurrentUser(null);
+              }
+            };
+            request.onerror = function() {
+              setCurrentUser(null);
+            };
+          }
+          // Ensure buttons are in correct state
+          if (!isActionTaken && currentUser) {
+            authorizeBtn.disabled = false;
+            denyBtn.disabled = false;
+            advancedBtn.disabled = false;
+          }
+        } catch (err) {
+          console.error('Failed to initialize database:', err);
+          dbStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> offline';
+          dbStatus.className = 'status-badge offline';
+          // Still allow manual login attempt with fallback
+          setCurrentUser(null);
+        }
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
